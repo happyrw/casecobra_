@@ -21,7 +21,7 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { ArrowRight, Check, ChevronsUpDown } from 'lucide-react'
+import { ArrowRight, Check, ChevronsUpDown, Loader2 } from 'lucide-react'
 import { BASE_PRICE } from '@/config/products'
 import { useUploadThing } from '@/lib/uploadthing'
 import { useToast } from '@/hooks/use-toast'
@@ -44,6 +44,7 @@ const DesignConfigurator = ({
 
     const { toast } = useToast()
     const router = useRouter()
+    const [loading, setLoading] = useState(false)
 
     //     const { mutate: saveConfig, isPending } = useMutation({
     //         mutationKey: ['save-config'],
@@ -91,6 +92,7 @@ const DesignConfigurator = ({
 
     async function saveConfiguration() {
         try {
+            setLoading(true);
             const {
                 left: caseLeft,
                 top: caseTop,
@@ -139,6 +141,9 @@ const DesignConfigurator = ({
                     'There was a problem saving your config, please try again.',
                 variant: 'destructive',
             })
+            setLoading(false);
+        } finally {
+            setLoading(false);
         }
     }
 
@@ -398,7 +403,7 @@ const DesignConfigurator = ({
                                 // }
                                 size='sm'
                                 className='w-full'>
-                                Continue
+                                {loading ? <Loader2 className='h-4 w-4 animate-spin' /> : "Continue"}
                                 <ArrowRight className='h-4 w-4 ml-1.5 inline' />
                             </Button>
                         </div>

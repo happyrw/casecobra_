@@ -3,7 +3,7 @@ import './globals.css'
 import Footer from '@/components/Shared/Footer';
 import Navbar from '@/components/Shared/Navbar';
 import { ClerkProvider } from '@clerk/nextjs';
-// import { Toaster } from '@/components/ui/toaster';
+import { Toaster } from '@/components/ui/toaster';
 // import Providers from '@/components/Providers';
 // import { constructMetadata } from '@/lib/utils';
 
@@ -31,7 +31,7 @@ export default function RootLayout({
             <Footer />
           </main>
 
-          {/* <Toaster /> */}
+          <Toaster />
         </body>
       </html>
     </ClerkProvider>
