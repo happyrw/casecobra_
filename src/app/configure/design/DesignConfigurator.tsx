@@ -93,6 +93,7 @@ const DesignConfigurator = ({
     async function saveConfiguration() {
         try {
             setLoading(true);
+            console.log("Starting image uploader")
             const {
                 left: caseLeft,
                 top: caseTop,
@@ -128,12 +129,21 @@ const DesignConfigurator = ({
             )
 
             const base64 = canvas.toDataURL()
+            console.log("base64", base64)
             const base64Data = base64.split(',')[1]
 
             const blob = base64ToBlob(base64Data, 'image/png')
+            console.log("blob", blob)
             const file = new File([blob], 'filename.png', { type: 'image/png' })
+            console.log("file", file)
 
-            await startUpload([file], { configId })
+            const response = await startUpload([file], { configId })
+            if (!response) {
+                console.log("We are not allowed to upload")
+                setLoading(false)
+                return;
+            }
+            console.log("Ressponse", response)
         } catch (err) {
             toast({
                 title: 'Something went wrong',
