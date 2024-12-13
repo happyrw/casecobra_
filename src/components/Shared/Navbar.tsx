@@ -2,7 +2,7 @@ import Link from 'next/link'
 import { ArrowRight } from 'lucide-react'
 import { buttonVariants } from '../ui/button'
 import MaxWidthWrapper from './MaxWidthWrapper'
-import { SignedIn, SignedOut, SignInButton, SignOutButton, SignUpButton, UserButton } from '@clerk/nextjs'
+import { SignedIn, SignedOut, SignInButton, SignOutButton, SignUpButton, UserButton, useUser } from '@clerk/nextjs'
 import { currentUser } from '@clerk/nextjs/server'
 
 const Navbar = async () => {

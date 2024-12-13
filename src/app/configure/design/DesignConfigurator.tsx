@@ -2,33 +2,33 @@
 
 import HandleComponent from '@/components/HandleComponent'
 import { AspectRatio } from '@/components/ui/aspect-ratio'
-import { ScrollArea } from '@/components/ui/scroll-area'
-import { cn, formatPrice } from '@/lib/utils'
-import NextImage from 'next/image'
-import { Rnd } from 'react-rnd'
-import { RadioGroup } from '@headlessui/react'
-import { useRef, useState } from 'react'
-import {
-    COLORS,
-    FINISHES,
-    MATERIALS,
-    MODELS,
-} from '@/validators/option-validator'
-import { Label } from '@/components/ui/label'
 import {
     DropdownMenu,
     DropdownMenuContent,
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { ArrowRight, Check, ChevronsUpDown, Loader2 } from 'lucide-react'
+import { Label } from '@/components/ui/label'
+import { ScrollArea } from '@/components/ui/scroll-area'
 import { BASE_PRICE } from '@/config/products'
-import { useUploadThing } from '@/lib/uploadthing'
-import { useToast } from '@/hooks/use-toast'
-// import { useMutation } from '@tanstack/react-query'
-import { saveConfig as _saveConfig, SaveConfigArgs } from './actions'
-import { useRouter } from 'next/navigation'
+import { cn, formatPrice } from '@/lib/utils'
+import {
+    COLORS,
+    FINISHES,
+    MATERIALS,
+    MODELS,
+} from '@/validators/option-validator'
+import { RadioGroup } from '@headlessui/react'
+import { ArrowRight, Check, ChevronsUpDown, Loader2 } from 'lucide-react'
+import NextImage from 'next/image'
+import { useRef, useState } from 'react'
+import { Rnd } from 'react-rnd'
 import { Button } from '@/components/ui/button'
+import { useToast } from '@/hooks/use-toast'
+import { uploadToAppwrite } from '@/lib/actions'
+import { useMutation } from '@tanstack/react-query'
+import { useRouter } from 'next/navigation'
+import { saveConfig as _saveConfig, SaveConfigArgs } from './actions'
 
 interface DesignConfiguratorProps {
     configId: string
@@ -46,22 +46,22 @@ const DesignConfigurator = ({
     const router = useRouter()
     const [loading, setLoading] = useState(false)
 
-    //     const { mutate: saveConfig, isPending } = useMutation({
-    //         mutationKey: ['save-config'],
-    //         mutationFn: async (args: SaveConfigArgs) => {
-    //             await Promise.all([saveConfiguration(), _saveConfig(args)])
-    //         },
-    //         onError: () => {
-    //             toast({
-    //                 title: 'Something went wrong',
-    //                 description: 'There was an error on our end. Please try again.',
-    //                 variant: 'destructive',
-    //             })
-    //         },
-    //         onSuccess: () => {
-    //             router.push(`/configure/preview?id=${configId}`)
-    //         },
-    //     })
+    const { mutate: saveConfig, isPending } = useMutation({
+        mutationKey: ['save-config'],
+        mutationFn: async (args: SaveConfigArgs) => {
+            await Promise.all([saveConfiguration(), _saveConfig(args)])
+        },
+        onError: () => {
+            toast({
+                title: 'Something went wrong',
+                description: 'There was an error on our end. Please try again.',
+                variant: 'destructive',
+            })
+        },
+        onSuccess: () => {
+            router.push(`/configure/preview?id=${configId}`)
+        },
+    })
 
     const [options, setOptions] = useState<{
         color: (typeof COLORS)[number]
@@ -88,12 +88,11 @@ const DesignConfigurator = ({
     const phoneCaseRef = useRef<HTMLDivElement>(null)
     const containerRef = useRef<HTMLDivElement>(null)
 
-    const { startUpload } = useUploadThing('imageUploader')
+    // const { startUpload } = uploadToAppwrite()
 
     async function saveConfiguration() {
         try {
             setLoading(true);
-            console.log("Starting image uploader")
             const {
                 left: caseLeft,
                 top: caseTop,
@@ -129,21 +128,12 @@ const DesignConfigurator = ({
             )
 
             const base64 = canvas.toDataURL()
-            console.log("base64", base64)
             const base64Data = base64.split(',')[1]
 
             const blob = base64ToBlob(base64Data, 'image/png')
-            console.log("blob", blob)
             const file = new File([blob], 'filename.png', { type: 'image/png' })
-            console.log("file", file)
 
-            const response = await startUpload([file], { configId })
-            if (!response) {
-                console.log("We are not allowed to upload")
-                setLoading(false)
-                return;
-            }
-            console.log("Ressponse", response)
+            await uploadToAppwrite(file, configId);
         } catch (err) {
             toast({
                 title: 'Something went wrong',
@@ -397,24 +387,20 @@ const DesignConfigurator = ({
                                 )}
                             </p>
                             <Button
-                                //@ts-ignore
-                                // isLoading={isPending}
-                                // disabled={isPending}
-                                // loadingText="Saving"
-                                onClick={saveConfiguration}
-                                // onClick={() =>
-                                //     saveConfig({
-                                //         configId,
-                                //         color: options.color.value,
-                                //         finish: options.finish.value,
-                                //         material: options.material.value,
-                                //         model: options.model.value,
-                                //     })
-                                // }
+                                disabled={isPending}
+                                onClick={() =>
+                                    saveConfig({
+                                        configId,
+                                        color: options.color.value,
+                                        finish: options.finish.value,
+                                        material: options.material.value,
+                                        model: options.model.value,
+                                    })
+                                }
                                 size='sm'
                                 className='w-full'>
-                                {loading ? <Loader2 className='h-4 w-4 animate-spin' /> : "Continue"}
-                                <ArrowRight className='h-4 w-4 ml-1.5 inline' />
+                                Continue
+                                {loading ? <Loader2 className='h-4 w-4 animate-spin' /> : <ArrowRight className='h-4 w-4 ml-1.5 inline' />}
                             </Button>
                         </div>
                     </div>

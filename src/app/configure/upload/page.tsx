@@ -1,8 +1,7 @@
 'use client'
 
-import { Progress } from '@/components/ui/progress'
 import { useToast } from '@/hooks/use-toast'
-import { useUploadThing } from '@/lib/uploadthing'
+import { uploadToAppwrite } from '@/lib/actions'
 import { cn } from '@/lib/utils'
 import { Image, Loader2, MousePointerSquareDashed } from 'lucide-react'
 import { useRouter } from 'next/navigation'
@@ -12,20 +11,8 @@ import Dropzone, { FileRejection } from 'react-dropzone'
 const Page = () => {
     const { toast } = useToast()
     const [isDragOver, setIsDragOver] = useState<boolean>(false)
-    const [uploadProgress, setUploadProgress] = useState<number>(0)
+    const [isUploading, setIsUploading] = useState(false)
     const router = useRouter()
-
-    const { startUpload, isUploading } = useUploadThing('imageUploader', {
-        onClientUploadComplete: ([data]) => {
-            const configId = data.serverData.configId
-            startTransition(() => {
-                router.push(`/configure/design?id=${configId}`)
-            })
-        },
-        onUploadProgress(p) {
-            setUploadProgress(p)
-        },
-    })
 
     const onDropRejected = (rejectedFiles: FileRejection[]) => {
         const [file] = rejectedFiles
@@ -39,10 +26,29 @@ const Page = () => {
         })
     };
 
-    const onDropAccepted = (acceptedFiles: File[]) => {
-        startUpload(acceptedFiles, { configId: undefined })
-        setIsDragOver(false)
-    }
+    const onDropAccepted = async (acceptedFiles: File[]) => {
+        const [file] = acceptedFiles;
+        setIsDragOver(false);
+
+        setIsUploading(true);
+
+        try {
+            const fileData = await uploadToAppwrite(file, undefined);
+            const configId = fileData.savedConfigId.configId;
+            // Redirect after successful upload
+            startTransition(() => {
+                router.push(`/configure/design?id=${configId}`);
+            });
+        } catch (error: any) {
+            toast({
+                title: 'Upload failed',
+                description: error.message || 'Something went wrong during upload',
+                variant: 'destructive',
+            });
+        } finally {
+            setIsUploading(false);
+        }
+    };
 
     const [isPending, startTransition] = useTransition()
 
@@ -83,10 +89,6 @@ const Page = () => {
                                 {isUploading ? (
                                     <div className='flex flex-col items-center'>
                                         <p>Uploading...</p>
-                                        <Progress
-                                            value={uploadProgress}
-                                            className='mt-2 w-40 h-2 bg-gray-300'
-                                        />
                                     </div>
                                 ) : isPending ? (
                                     <div className='flex flex-col items-center'>
